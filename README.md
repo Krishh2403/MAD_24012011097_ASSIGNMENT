@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="SCREEN/Login.png" width="110" alt="FarmLog App Icon">
-</p>
+
 
 <h1 align="center">🌿 FarmLog</h1>
 
@@ -27,23 +25,6 @@ FarmLog is an Android application developed for a **Mobile Application Developme
 
 The application provides local user profiles, secure session persistence, activity management, filters, search, Farm Insights, and a modern agriculture-inspired user interface.
 
----
-
-## 🎥 Full Application Demo
-
-<p align="center">
-  <img src="SCREEN/DEMO_FULL.gif" width="360" alt="FarmLog full animated application demo">
-</p>
-
-<p align="center">
-  <strong>FarmLog application flow: Login → Dashboard → Add Activity → Filters → Farm Insights → Logout</strong>
-</p>
-
-<p align="center">
-  <a href="SCREEN/DEMO_FINAL.mp4">▶ Open the full MP4 demo video with sound</a>
-</p>
-
-> The GIF above plays automatically and loops continuously on GitHub. The MP4 link provides the full-quality video with sound.
 
 ---
 
