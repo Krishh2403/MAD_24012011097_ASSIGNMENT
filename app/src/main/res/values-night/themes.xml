@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.FarmLog" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#176B3A</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">#C8F5D5</item>
+        <item name="colorOnPrimaryContainer">#00210D</item>
+
+        <item name="colorSecondary">#F2A33A</item>
+        <item name="colorOnSecondary">#3D2200</item>
+        <item name="colorSecondaryContainer">#FFE0B2</item>
+        <item name="colorOnSecondaryContainer">#2B1700</item>
+
+        <item name="colorTertiary">#2E86AB</item>
+        <item name="colorSurface">#F8FAF7</item>
+        <item name="colorSurfaceVariant">#E7EEE6</item>
+        <item name="colorOnSurface">#172019</item>
+        <item name="colorOnSurfaceVariant">#526057</item>
+
+        <item name="android:windowBackground">#F8FAF7</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+
+    <style name="TextAppearance.FarmLog.Hero" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.FarmLog.Heading" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.FarmLog.Label" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="TextAppearance.FarmLog.Body" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+</resources>
