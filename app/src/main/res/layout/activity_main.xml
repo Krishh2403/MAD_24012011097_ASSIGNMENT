@@ -20,6 +20,8 @@
         app:layout_constraintTop_toTopOf="parent"
         app:subtitle="Your digital farm journal"
         app:subtitleTextColor="#D6F5DE"
+        app:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.Material3.Light"
         app:title="FarmLog"
         app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge"
         app:titleTextColor="@android:color/white" />

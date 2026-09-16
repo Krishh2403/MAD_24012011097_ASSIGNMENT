@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "383184961281",
+    "project_id": "farmlog-2fbdf",
+    "storage_bucket": "farmlog-2fbdf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:383184961281:android:092c562f2e3a0816a46500",
+        "android_client_info": {
+          "package_name": "com.example.mad_24012011097_assignment"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7Yn4AD1QocrtnSIBzm_j2KJJw4Vxg6Lc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

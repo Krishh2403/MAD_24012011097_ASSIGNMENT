@@ -25,6 +25,7 @@ import com.google.android.material.chip.ChipGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
 import android.content.Intent
 class MainActivity : AppCompatActivity() {
 
@@ -148,6 +149,8 @@ class MainActivity : AppCompatActivity() {
             )
             .setNegativeButton("Stay logged in", null)
             .setPositiveButton("Log out") { _, _ ->
+                FirebaseAuth.getInstance().signOut()
+
                 getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                     .edit()
                     .clear()

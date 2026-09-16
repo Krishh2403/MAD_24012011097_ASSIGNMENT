@@ -2,7 +2,8 @@ package com.example.mad_24012011097_assignment
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Patterns
+import android.view.View
+import androidx.activity.OnBackPressedCallback
 import android.view.inputmethod.EditorInfo
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
@@ -12,10 +13,19 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.example.mad_24012011097_assignment.databinding.ActivityLoginBinding
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import com.google.firebase.auth.userProfileChangeRequest
+import java.util.regex.Pattern
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
+    private val auth by lazy { FirebaseAuth.getInstance() }
+    private var isAwaitingVerification = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,20 +35,28 @@ class LoginActivity : AppCompatActivity() {
 
         applySystemBarInsets()
 
-        val preferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-
-        if (preferences.getBoolean(KEY_IS_LOGGED_IN, false)) {
-            openDashboard()
-            return
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            currentUser.reload().addOnCompleteListener {
+                playLoginAnimation()
+                if (currentUser.isEmailVerified) {
+                    persistSessionAndOpenDashboard(
+                        currentUser.displayName.orEmpty(),
+                        currentUser.email.orEmpty()
+                    )
+                } else {
+                    showVerificationPending(currentUser.email.orEmpty())
+                }
+            }
+        } else {
+            playLoginAnimation()
         }
-
-        playLoginAnimation()
 
         binding.btnContinue.setOnClickListener {
             animateButtonAndContinue()
         }
 
-        binding.editEmail.setOnEditorActionListener { _, actionId, _ ->
+        binding.editPassword.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 animateButtonAndContinue()
                 true
@@ -46,6 +64,28 @@ class LoginActivity : AppCompatActivity() {
                 false
             }
         }
+
+        binding.tvResend.setOnClickListener {
+            resendVerificationEmail()
+        }
+
+        binding.tvUseDifferentEmail.setOnClickListener {
+            resetToLoginForm()
+        }
+
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (isAwaitingVerification) {
+                        resetToLoginForm()
+                    } else {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                }
+            }
+        )
     }
 
     private fun applySystemBarInsets() {
@@ -115,7 +155,11 @@ class LoginActivity : AppCompatActivity() {
                     .setDuration(140L)
                     .start()
 
-                validateAndContinue()
+                if (isAwaitingVerification) {
+                    checkVerificationAndContinue()
+                } else {
+                    validateAndContinue()
+                }
             }
             .start()
     }
@@ -123,9 +167,12 @@ class LoginActivity : AppCompatActivity() {
     private fun validateAndContinue() {
         val name = binding.editName.text.toString().trim()
         val email = binding.editEmail.text.toString().trim().lowercase()
+        val password = binding.editPassword.text.toString()
 
         binding.nameLayout.error = null
         binding.emailLayout.error = null
+        binding.passwordLayout.error = null
+        hideStatusMessage()
 
         var isValid = true
 
@@ -134,13 +181,154 @@ class LoginActivity : AppCompatActivity() {
             isValid = false
         }
 
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (!EMAIL_REGEX.matcher(email).matches()) {
             binding.emailLayout.error = "Enter a valid email address"
+            isValid = false
+        }
+
+        if (password.length < 6) {
+            binding.passwordLayout.error = "Use at least 6 characters"
             isValid = false
         }
 
         if (!isValid) return
 
+        setFormEnabled(false)
+
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnSuccessListener { result ->
+                setFormEnabled(true)
+                val user = result.user
+                user?.updateProfile(userProfileChangeRequest { displayName = name })
+                user?.sendEmailVerification()
+                showVerificationPending(email)
+            }
+            .addOnFailureListener { exception ->
+                if (exception is FirebaseAuthUserCollisionException) {
+                    signInExistingUser(email, password)
+                } else {
+                    setFormEnabled(true)
+                    binding.passwordLayout.error = when (exception) {
+                        is FirebaseAuthWeakPasswordException -> "Password is too weak"
+                        else -> exception.localizedMessage ?: "Something went wrong. Try again."
+                    }
+                }
+            }
+    }
+
+    private fun signInExistingUser(email: String, password: String) {
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener { result ->
+                setFormEnabled(true)
+                val user = result.user ?: return@addOnSuccessListener
+                if (user.isEmailVerified) {
+                    persistSessionAndOpenDashboard(
+                        user.displayName ?: binding.editName.text.toString().trim(),
+                        email
+                    )
+                } else {
+                    user.sendEmailVerification()
+                    showVerificationPending(email)
+                }
+            }
+            .addOnFailureListener { exception ->
+                setFormEnabled(true)
+                binding.passwordLayout.error = when (exception) {
+                    is FirebaseAuthInvalidCredentialsException -> "Incorrect password for this email"
+                    is FirebaseAuthInvalidUserException -> "No account found for this email"
+                    else -> exception.localizedMessage ?: "Something went wrong. Try again."
+                }
+            }
+    }
+
+    private fun checkVerificationAndContinue() {
+        val user = auth.currentUser
+        if (user == null) {
+            isAwaitingVerification = false
+            return
+        }
+
+        setFormEnabled(false)
+
+        user.reload()
+            .addOnSuccessListener {
+                setFormEnabled(true)
+                if (user.isEmailVerified) {
+                    persistSessionAndOpenDashboard(user.displayName.orEmpty(), user.email.orEmpty())
+                } else {
+                    showStatusMessage("Still not verified. Check your inbox and tap the link, then try again.")
+                }
+            }
+            .addOnFailureListener {
+                setFormEnabled(true)
+                showStatusMessage(it.localizedMessage ?: "Couldn't check verification status. Try again.")
+            }
+    }
+
+    private fun resendVerificationEmail() {
+        val user = auth.currentUser ?: return
+
+        user.sendEmailVerification()
+            .addOnSuccessListener {
+                showStatusMessage("Verification email sent to ${user.email}.")
+            }
+            .addOnFailureListener {
+                showStatusMessage(it.localizedMessage ?: "Couldn't send email. Try again shortly.")
+            }
+    }
+
+    private fun showVerificationPending(email: String) {
+        isAwaitingVerification = true
+
+        binding.nameLayout.visibility = View.GONE
+        binding.emailLayout.visibility = View.GONE
+        binding.passwordLayout.visibility = View.GONE
+
+        binding.tvResend.visibility = View.VISIBLE
+        binding.tvUseDifferentEmail.visibility = View.VISIBLE
+        binding.btnContinue.text = "I've verified — Continue"
+
+        showStatusMessage("We sent a verification link to $email. Verify it, then tap Continue.")
+    }
+
+    private fun resetToLoginForm() {
+        auth.signOut()
+        isAwaitingVerification = false
+
+        binding.editEmail.text?.clear()
+        binding.editPassword.text?.clear()
+        binding.emailLayout.error = null
+        binding.passwordLayout.error = null
+
+        binding.nameLayout.visibility = View.VISIBLE
+        binding.emailLayout.visibility = View.VISIBLE
+        binding.passwordLayout.visibility = View.VISIBLE
+
+        binding.tvResend.visibility = View.GONE
+        binding.tvUseDifferentEmail.visibility = View.GONE
+        binding.btnContinue.text = "Enter FarmLog  →"
+
+        hideStatusMessage()
+        setFormEnabled(true)
+    }
+
+    private fun showStatusMessage(message: String) {
+        binding.tvStatusMessage.text = message
+        binding.tvStatusMessage.visibility = View.VISIBLE
+    }
+
+    private fun hideStatusMessage() {
+        binding.tvStatusMessage.visibility = View.GONE
+    }
+
+    private fun setFormEnabled(enabled: Boolean) {
+        binding.btnContinue.isEnabled = enabled
+        binding.editName.isEnabled = enabled
+        binding.editEmail.isEnabled = enabled
+        binding.editPassword.isEnabled = enabled
+    }
+
+    private fun persistSessionAndOpenDashboard(name: String, email: String) {
         getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_IS_LOGGED_IN, true)
@@ -148,12 +336,7 @@ class LoginActivity : AppCompatActivity() {
             .putString(KEY_USER_EMAIL, email)
             .apply()
 
-        binding.btnContinue.isEnabled = false
-        binding.btnContinue.text = "Welcome, ${name.substringBefore(" ")}"
-
-        binding.btnContinue.postDelayed({
-            openDashboard()
-        }, 420L)
+        openDashboard()
     }
 
     private fun openDashboard() {
@@ -166,5 +349,14 @@ class LoginActivity : AppCompatActivity() {
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
         private const val KEY_USER_NAME = "user_name"
         private const val KEY_USER_EMAIL = "user_email"
+
+        // Stricter than Patterns.EMAIL_ADDRESS: rejects leading/trailing dots,
+        // consecutive dots, and requires an alphabetic TLD of at least 2 chars.
+        private val EMAIL_REGEX = Pattern.compile(
+            "^[A-Za-z0-9](?:[A-Za-z0-9._%+-]*[A-Za-z0-9])?@" +
+                "[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?" +
+                "(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*" +
+                "\\.[A-Za-z]{2,}$"
+        )
     }
 }
