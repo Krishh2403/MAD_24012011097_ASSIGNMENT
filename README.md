@@ -23,7 +23,7 @@
 
 FarmLog is an Android application developed for a **Mobile Application Development** assignment. It helps farmers maintain a digital journal for crop activities such as sowing, harvesting, irrigation, and fertiliser application.
 
-The application provides local user profiles, secure session persistence, activity management, filters, search, Farm Insights, and a modern agriculture-inspired user interface.
+The application provides secure Firebase-authenticated user accounts, email verification, per-user activity management, filters, search, Farm Insights, and a modern agriculture-inspired user interface.
 
 
 ---
@@ -32,10 +32,11 @@ The application provides local user profiles, secure session persistence, activi
 
 | Feature | Description |
 |---|---|
-| 🔐 Local Login | Login using name and email address |
-| 👤 Multi-User Profiles | Each email address has separate farm records |
-| 💾 Session Persistence | Logged-in users open directly to the dashboard |
-| 🚪 Logout | Clears the current session and returns to Login |
+| 🔐 Firebase Authentication | Sign up / sign in with name, email, and password via Firebase |
+| ✉️ Email Verification | Dashboard access requires a verified email address, with resend and "use a different email" options |
+| 👤 Multi-User Profiles | Each verified account has separate farm records |
+| 💾 Session Persistence | Verified, logged-in users open directly to the dashboard |
+| 🚪 Logout | Signs out of Firebase, clears the local session, and returns to Login |
 | ➕ Add Activity | Save crop name, date, activity type, and notes |
 | 🌾 Activity Types | Sowing, Harvesting, Irrigation, and Fertilizer |
 | 🗂️ Smart Filters | Filter farm records by activity category |
@@ -50,36 +51,42 @@ The application provides local user profiles, secure session persistence, activi
 ## 📱 Application Flow
 
 ```text
-Login Screen
+Sign Up (name, email, password)
+     ↓
+Firebase Authentication
+     ↓
+Verification Email Sent
+     ↓
+User Verifies Email → Taps "I've verified — Continue"
      ↓
 FarmLog Dashboard
      ↓
 Add Farm Activity
      ↓
-Save Activity in Room Database
+Save Activity in Room Database (scoped to owner email)
      ↓
 Dashboard and Farm Insights Update Automatically
 ```
 
-### Local User Profile Flow
+### Multi-User Profile Flow
 
 ```text
-Login with farmer1@gmail.com
+Sign up & verify farmer1@gmail.com
            ↓
 Shows only farmer1@gmail.com activities
 
 Logout
            ↓
-Login with farmer2@gmail.com
+Sign up & verify farmer2@gmail.com
            ↓
 Shows only farmer2@gmail.com activities
 
-Login again with farmer1@gmail.com
+Sign in again with farmer1@gmail.com
            ↓
 Earlier saved farm activities load automatically
 ```
 
-> FarmLog uses the email address as a local profile ID. Each record is saved with its owner email, so users only see their own farm activities.
+> Accounts are managed by Firebase Authentication; each farm record is saved with its owner's verified email, so users only ever see their own activities, even on a shared device.
 
 ---
 
@@ -127,7 +134,7 @@ Earlier saved farm activities load automatically
         <img src="SCREEN/SS4.png" width="190" alt="Farm Insights">
       </a>
       <br>
-      <sub><b>Activity Filter</b></sub>
+      <sub><b>Activity Filters</b></sub>
     </td>
     <td align="center">
       <a href="SCREEN/SS5.png">
@@ -143,7 +150,7 @@ Earlier saved farm activities load automatically
         <img src="SCREEN/SS6.png" width="190" alt="FarmLog Additional Screen">
       </a>
       <br>
-      <sub><b>Search and find</b></sub>
+      <sub><b>Search and Find</b></sub>
     </td>
   </tr>
 </table>
@@ -161,6 +168,7 @@ Earlier saved farm activities load automatically
 | Kotlin | Main Android programming language |
 | XML | User interface layouts |
 | Android Studio | Development environment |
+| Firebase Authentication | Email/password sign-up, sign-in, and email verification |
 | Room Database | Local farm activity storage |
 | SQLite | Database engine used by Room |
 | MVVM | Application architecture pattern |
@@ -168,7 +176,7 @@ Earlier saved farm activities load automatically
 | LiveData | Updates the UI when data changes |
 | RecyclerView | Displays farm activity records |
 | Material Components | Modern Android interface components |
-| SharedPreferences | Stores login session information |
+| SharedPreferences | Caches the signed-in user's name/email for local queries |
 
 ---
 
@@ -179,12 +187,12 @@ FarmLog follows the **MVVM (Model–View–ViewModel)** architecture.
 ```text
 Activities and XML Layouts
 Login | Dashboard | Add Activity | Insights
-                    ↓
-             FarmViewModel
-                    ↓
-                FarmDao
-                    ↓
-             Room Database
+        ↓                           ↓
+Firebase Authentication      FarmViewModel
+                                    ↓
+                                FarmDao
+                                    ↓
+                             Room Database
 ```
 
 ---
@@ -198,7 +206,7 @@ Login | Dashboard | Add Activity | Insights
 | `FarmDatabase.kt` | Configures the Room database |
 | `FarmViewModel.kt` | Connects database data with the UI |
 | `FarmLogAdapter.kt` | Displays activity records in RecyclerViews |
-| `LoginActivity.kt` | Handles local login and saved sessions |
+| `LoginActivity.kt` | Handles Firebase sign-up/sign-in, email verification, and session persistence |
 | `MainActivity.kt` | Displays the FarmLog dashboard |
 | `AddLogActivity.kt` | Allows users to add farm activities |
 | `SummaryActivity.kt` | Shows Farm Insights and statistics |
@@ -210,56 +218,59 @@ Login | Dashboard | Add Activity | Insights
 1. Open **Android Studio**.
 2. Click **Open**.
 3. Select the `MAD_24012011097_ASSIGNMENT` project folder.
-4. Wait for **Gradle Sync** to complete.
-5. Start an Android Emulator or connect an Android phone.
-6. Click the green **Run ▶** button.
-7. Enter your name and email address.
-8. Add farm activities and open Farm Insights.
+4. Set up a Firebase project and drop your `google-services.json` into `app/` — full step-by-step instructions are in [SETUP.md](SETUP.md).
+5. Wait for **Gradle Sync** to complete.
+6. Start an Android Emulator (with Google Play Services) or connect an Android phone.
+7. Click the green **Run ▶** button.
+8. Sign up with your name, a real email address, and a password (6+ characters).
+9. Open the verification email that Firebase sends, tap the link, then tap **"I've verified — Continue"** in the app.
+10. Add farm activities and open Farm Insights.
 
 ---
 
-## 🧪 Testing Local User Profiles
+## 🧪 Testing Multi-User Profiles
 
-1. Log in with:
+1. Sign up and verify:
 
    ```text
-   farmer1@gmail.com
+   farmer1@example.com
    ```
 
 2. Add one or more farm activities.
 
-3. Logout from the application.
+3. Logout from the application (toolbar menu → **Log out**).
 
-4. Log in with:
+4. Sign up and verify a second address:
 
    ```text
-   farmer2@gmail.com
+   farmer2@example.com
    ```
 
-5. The dashboard is empty because this is a new local user profile.
+5. The dashboard is empty because this is a new account with no saved records yet.
 
-6. Logout and log in again with:
+6. Logout and sign in again with:
 
    ```text
-   farmer1@gmail.com
+   farmer1@example.com
    ```
 
 7. The earlier farm records load automatically.
+
+> Each address needs a real inbox you can access to complete verification — use disposable/alias addresses if you don't want to use your primary email for testing.
 
 ---
 
 ## 🎯 Future Enhancements
 
-- Firebase Authentication
-- Firebase Firestore cloud backup
-- Password-protected login
+- Firebase Firestore cloud backup / multi-device sync
+- Edit existing farm records
+- "Forgot password" flow
 - Crop image upload
 - Weather information integration
 - Irrigation and fertiliser reminders
-- Edit existing farm records
 - Dark mode
 - Export reports as PDF or CSV
-- Multi-device data synchronisation
+- Multi-language support
 
 ---
 
@@ -270,9 +281,12 @@ Login | Dashboard | Add Activity | Insights
 | Project Name | FarmLog – Smart Farm Activity Manager |
 | Platform | Android |
 | Programming Language | Kotlin |
-| Database | Room Database |
+| Authentication | Firebase Authentication (Email/Password + verification) |
+| Database | Room Database (local, per-user) |
 | Architecture | MVVM |
 | Purpose | Mobile Application Development Assignment |
+
+For the full requirement set and setup instructions, see [PRD.md](PRD.md), [SRS.md](SRS.md), and [SETUP.md](SETUP.md).
 
 ---
 
