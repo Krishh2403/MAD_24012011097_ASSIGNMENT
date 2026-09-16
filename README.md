@@ -120,21 +120,21 @@ Earlier saved farm activities load automatically
         <img src="SCREEN/SS3.png" width="190" alt="Farm Activity Filters">
       </a>
       <br>
-      <sub><b>Activity Filters</b></sub>
+      <sub><b>Select Crop</b></sub>
     </td>
     <td align="center">
       <a href="SCREEN/SS4.png">
         <img src="SCREEN/SS4.png" width="190" alt="Farm Insights">
       </a>
       <br>
-      <sub><b>Farm Insights</b></sub>
+      <sub><b>Activity Filter</b></sub>
     </td>
     <td align="center">
       <a href="SCREEN/SS5.png">
         <img src="SCREEN/SS5.png" width="190" alt="Farm Search and History">
       </a>
       <br>
-      <sub><b>Search and History</b></sub>
+      <sub><b>Farm Insights</b></sub>
     </td>
   </tr>
   <tr>
@@ -143,7 +143,7 @@ Earlier saved farm activities load automatically
         <img src="SCREEN/SS6.png" width="190" alt="FarmLog Additional Screen">
       </a>
       <br>
-      <sub><b>Additional Screen</b></sub>
+      <sub><b>Search and find</b></sub>
     </td>
   </tr>
 </table>
